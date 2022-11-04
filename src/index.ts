@@ -1,6 +1,7 @@
 import express from "express";
 import authRoutes from "./routes/auth.route";
 import cartRoutes from "./routes/cart.route";
+import rewardRoutes from "./routes/reward.route";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
@@ -14,6 +15,7 @@ app.use(cors());
 app.use(express.json());
 app.use("/auth", authRoutes);
 app.use("/cart", cartRoutes);
+app.use("/rewards", rewardRoutes);
 
 mongoose.connect(`${process.env.MONGO_URI}`);
 

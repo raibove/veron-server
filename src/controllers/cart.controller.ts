@@ -6,11 +6,9 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const addToCart = async (req: Request, res: Response) => {
   const bearerHeader = req.headers["authorization"];
-
   if (!bearerHeader) {
     return res.status(403).json("Not Authorized");
   }
-
   try {
     const bearer = bearerHeader?.split(" ");
     const token = bearer[1];
@@ -29,9 +27,11 @@ export const addToCart = async (req: Request, res: Response) => {
     let userProduct = await Cart.findOne(findProduct);
     if (userProduct) {
       let updatedQuantity = userProduct.quantity + 1;
+      let updatedDate = userProduct.updateDate
+      updatedDate.push(new Date())
       Cart.findOneAndUpdate(
         findProduct,
-        { quantity: updatedQuantity },
+        { quantity: updatedQuantity, updateDate: updatedDate },
         { new: true },
         (err, doc) => {
           if (err) {
@@ -40,8 +40,7 @@ export const addToCart = async (req: Request, res: Response) => {
         }
       );
     } else {
-      // add product
-      let newUserProduct = await new Cart({
+      let newUserProduct = new Cart({
         userMail: payload.email,
         name: data.name,
         productId: data.productId,
@@ -49,9 +48,9 @@ export const addToCart = async (req: Request, res: Response) => {
         quantity: data.quantity,
         productImage: data.productImage,
         category: data.category,
+        updateDate: [new Date()]
       });
       await newUserProduct.save();
-
     }
     return res.status(200).json("product added to cart");
   } catch (e) {
@@ -61,7 +60,6 @@ export const addToCart = async (req: Request, res: Response) => {
 
 export const getCart = async (req: Request, res: Response) => {
   const bearerHeader = req.headers["authorization"];
-
   if (!bearerHeader) {
     return res.status(403).json("Not Authorized");
   }
