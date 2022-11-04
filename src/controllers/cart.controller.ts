@@ -42,7 +42,7 @@ export const addToCart = async (req: Request, res: Response) => {
     } else {
       // add product
       let newUserProduct = await new Cart({
-        userMail: data.userMail,
+        userMail: payload.email,
         name: data.name,
         productId: data.productId,
         price: data.productId,
@@ -51,6 +51,7 @@ export const addToCart = async (req: Request, res: Response) => {
         category: data.category,
       });
       await newUserProduct.save();
+
     }
     return res.status(200).json("product added to cart");
   } catch (e) {
@@ -77,6 +78,35 @@ export const getCart = async (req: Request, res: Response) => {
       return res.status(403).json("User do not exist");
     }
 
+    let userCart = await Cart.find({ userMail: payload.email });
+
+    return res.json(userCart);
+  } catch (e) {
+    res.status(403).json("Failed to validate user");
+  }
+};
+
+
+export const chekoutCart = async (req: Request, res: Response) => {
+  const bearerHeader = req.headers["authorization"];
+
+  if (!bearerHeader) {
+    return res.status(403).json("Not Authorized");
+  }
+  try {
+    const bearer = bearerHeader?.split(" ");
+    const token = bearer[1];
+    const ticket = await googleClient.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    if (!payload) {
+      return res.status(403).json("User do not exist");
+    }
+
+    await Cart.deleteMany({userMail: payload.email})
     let userCart = await Cart.find({ userMail: payload.email });
 
     return res.json(userCart);
