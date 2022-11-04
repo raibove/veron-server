@@ -1,15 +1,14 @@
 import { Request, Response } from "express";
 import Cart from "../models/cart.model";
+import { OAuth2Client } from "google-auth-library";
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const addToCart = async (req: Request, res: Response) => {
-  // console.log(req.headers)
-  const bearerHeader = req.headers["authorization"];
-  console.log(bearerHeader);
   const data = req.body;
   let findProduct = { userMail: data.userMail, productId: data.productId };
   let userProduct = await Cart.findOne(findProduct);
   if (userProduct) {
-    console.log("increase quantity");
     let updatedQuantity = userProduct.quantity + 1;
     Cart.findOneAndUpdate(
       findProduct,
@@ -17,8 +16,6 @@ export const addToCart = async (req: Request, res: Response) => {
       { new: true },
       (err, doc) => {
         if (err) {
-          console.log("in err");
-
           return res.status(500).json("Something wrong when updating data!");
         }
       }
@@ -39,4 +36,29 @@ export const addToCart = async (req: Request, res: Response) => {
   return res.status(200).json("product added to cart");
 };
 
-export const getCart = () => {};
+export const getCart = async (req: Request, res: Response) => {
+  const bearerHeader = req.headers["authorization"];
+
+  if (!bearerHeader) {
+    return res.status(403).json("not authorized");
+  }
+  try{
+  const bearer = bearerHeader?.split(" ");
+  const token = bearer[1];
+  const ticket = await googleClient.verifyIdToken({
+    idToken: token,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+
+  const payload = ticket.getPayload();
+  if (!payload) {
+    return res.status(403).json("User do not exist");
+  }
+
+  let userCart = await Cart.find({ userMail: payload.email });
+
+  return res.json(userCart);}
+  catch(e){
+    res.status(403).json("Failed to validate user")
+  }
+};

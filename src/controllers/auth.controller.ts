@@ -8,8 +8,8 @@ export const authenticateUser = async (req: Request, res: Response) => {
   const { token } = req.body;
 
   const ticket = await googleClient.verifyIdToken({
-      idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID
+    idToken: token,
+    audience: process.env.GOOGLE_CLIENT_ID,
   });
 
   const payload = ticket.getPayload();

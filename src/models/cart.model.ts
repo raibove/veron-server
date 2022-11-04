@@ -35,12 +35,12 @@ const CartSchema = new mongoose.Schema({
   },
   createdAt: {
     type: Date,
-    default: new Date()
+    default: new Date(),
   },
   productImage: {
     type: String,
-    required: true
-  }
+    required: true,
+  },
 });
 
 export default mongoose.model<CartDocument>("Cart", CartSchema);
